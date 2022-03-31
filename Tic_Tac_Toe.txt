@@ -1,0 +1,173 @@
+drop table news;
+create table news (
+ROW_NUM NUMBER GENERATED ALWAYS AS IDENTITY START WITH 1 INCREMENT BY 1 MAXVALUE 3,
+A varchar(3) check (A IN ('X','O')) ,
+B varchar(3) check (B IN ('X','O')) ,
+C varchar(3) check (C IN ('X','O'))
+);
+
+INSERT INTO news(A,B,C) VALUES(NULL,NULL,NULL);
+INSERT INTO news(A,B,C) VALUES(NULL,NULL,NULL);
+INSERT INTO news(A,B,C) VALUES(NULL,NULL,NULL);
+
+drop table checking;
+
+create table checking (
+ROW_NUM NUMBER GENERATED ALWAYS AS IDENTITY START WITH 1 INCREMENT BY 1 MAXVALUE 2 ,
+variable1 varchar(3) 
+);
+
+insert into checking(variable1) values(NULL);
+
+
+
+----------------------trigger---------------------------------
+
+CREATE OR REPLACE TRIGGER tictac
+after UPDATE ON news 
+FOR EACH ROW
+DECLARE 
+
+pragma autonomous_transaction;
+
+BEGIN
+IF (:OLD.A IS NULL AND :NEW.A IS NOT NULL) OR (:OLD.B IS NULL AND :NEW.B IS NOT NULL) OR (:OLD.C IS NULL AND :NEW.C IS NOT NULL) THEN
+
+DBMS_OUTPUT.PUT_LINE('NULL TO NOT NULL ENTRY');
+
+end if ;
+
+IF (:OLD.A <> :NEW.A) OR (:OLD.B <> :NEW.B) OR (:OLD.C <> :NEW.C) THEN
+        
+        raise_application_error(-2000,'Enter different variable');
+END IF;
+  
+  dbms_output.put_line('exit');
+  
+END;
+/
+
+------------------triiger 2---------------------------------------------
+
+CREATE OR REPLACE TRIGGER checking
+after UPDATE ON checking 
+FOR EACH ROW
+BEGIN
+
+if (:old.variable1 <> :NEW.variable1) or (:old.variable1 is null) then
+
+DBMS_OUTPUT.PUT_LINE( 'game continue');
+
+else
+RAISE_APPLICATION_ERROR(-20000,'same player trying to play'); 
+
+end if ;
+end;
+/
+
+--------------------SP--------------------------------------------
+
+CREATE OR REPLACE PROCEDURE game (symbol IN VARCHAR2, row_no  number , col_num  number) 
+as 
+v_1 news.A%TYPE;
+  v_2 news.B%TYPE;
+  v_3 news.C%TYPE;
+  
+  v_4 news.A%TYPE;
+  v_5 news.B%TYPE;
+  v_6 news.C%TYPE;
+  
+  v_7 news.A%TYPE;
+  v_8 news.B%TYPE;
+  v_9 news.C%TYPE;
+ 
+BEGIN
+
+dbms_output.put_line('test');
+
+
+if col_num =1 then 
+update checking set variable1 = symbol where row_num =1 ;
+UPDATE news SET A = symbol where row_num = row_no;
+
+elsif col_num = 2 then
+UPDATE checking SET variable1 = symbol where row_num =1 ;
+UPDATE news SET B = symbol where row_num = row_no;
+
+elsif col_num = 3 then
+update checking set variable1 = symbol where row_num =1;
+UPDATE news SET C = symbol where row_num = row_no;
+
+
+else
+dbms_output.put_line('no update');
+
+end if; 
+
+  SELECT A, B, C INTO v_1,v_2,v_3
+  FROM news
+  WHERE row_num = 1;
+ 
+  dbms_output.put_line( 'this is value of v_1 ' || v_1 || ' this is value of v_2 ' || v_2 || ' this is the value of v_3 ' || v_3 );
+  
+  -- values of v_4 , v_5, v_6 
+  SELECT A, B, C INTO v_4,v_5,v_6
+  FROM news
+  WHERE row_num = 2 ;
+  
+  dbms_output.put_line( 'this is value of v_4 '  || v_4 || ' this is value of v_5 ' || v_5 || ' this is the value of v_6 ' || v_6 );
+  
+    --values of v_7 , v_8, v_9 
+  SELECT A, B, C INTO v_7,v_8,v_9
+  FROM news
+  WHERE row_num = 3 ;
+  
+  dbms_output.put_line( 'this is value of v_7 '  || v_7 || ' this is value of v_8 ' || v_8 || ' this is the value of v_9 ' || v_9 );
+  
+  
+  if (v_1 = v_2 and v_2 = v_3 ) then
+  DBMS_OUTPUT.PUT_LINE(v_1 || ' has won');
+  
+  elsif (v_4=v_5 and v_5=v_6 ) then
+  DBMS_OUTPUT.PUT_LINE(v_4 || ' has won');
+  
+  elsif (v_7=v_8 and v_8=v_9 ) then
+  DBMS_OUTPUT.PUT_LINE(v_7 || ' has won');
+  
+  elsif (v_1 = v_4 and v_4 = v_7) then
+  DBMS_OUTPUT.PUT_LINE(v_1 || ' has won');
+  
+  elsif (v_2 = v_5 and v_5 = v_8 ) then
+  DBMS_OUTPUT.PUT_LINE(v_2 || ' has won');
+  
+  elsif (v_3 = v_6 and v_6 = v_9 )then
+  DBMS_OUTPUT.PUT_LINE(v_3 || ' has won');
+  
+  elsif (v_1 = v_5 and v_5 = v_9 ) then
+  DBMS_OUTPUT.PUT_LINE(v_1 || ' has won');
+  
+  elsif (v_3 = v_5 and v_5 = v_7 )then
+  DBMS_OUTPUT.PUT_LINE(v_3 || ' has won');
+  
+  elsif
+  (v_1 is NULL or v_2 is NULL or v_3 is NULL or v_4 is NULL or v_5 is NULL or v_6 is NULL or v_7 is NULL or v_8 is NULL or v_9 is NULL) then
+  dbms_output.put_line('not finished');
+  
+  else 
+  dbms_output.put_line('not a winner');
+  end if;
+
+ end;
+/ 
+
+
+
+  
+
+EXEC game('O',3,3);
+SELECT * FROM news;
+select * from checking;
+
+
+
+
